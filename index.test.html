@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Counting Sort Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f7fafc; }
+    .test-result { margin: 12px 0; padding: 8px; border-radius: 6px; }
+    .pass { background: #e0f7e9; color: #1a7f37; }
+    .fail { background: #ffeaea; color: #b71c1c; }
+    .test-title { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Test tự động cho Counting Sort Demo</h2>
+  <div id="testResults"></div>
+  <iframe id="demoFrame" src="index.html" style="width:500px;height:500px;border:1px solid #ccc;display:none"></iframe>
+  <script>
+    // Helper: chờ cho đến khi iframe load xong
+    function waitForFrameLoad(frame) {
+      return new Promise(resolve => {
+        if (frame.contentDocument.readyState === 'complete') resolve();
+        else frame.onload = () => resolve();
+      });
+    }
+
+    // Helper: chạy 1 test case UI
+    async function runUITest({title, input, expectOutput, expectError}) {
+      const frame = document.getElementById('demoFrame');
+      frame.contentWindow.location.reload();
+      await waitForFrameLoad(frame);
+
+      const doc = frame.contentDocument;
+      const inputEl = doc.getElementById('inputArr');
+      const btn = doc.querySelector('button');
+      const outputDiv = doc.getElementById('output');
+      const errorDiv = doc.getElementById('error');
+
+      inputEl.value = input;
+      btn.click();
+
+      // Chờ DOM cập nhật
+      await new Promise(r => setTimeout(r, 100));
+
+      let pass = true, msg = '';
+      if (expectOutput !== undefined) {
+        pass = outputDiv.textContent.trim() === expectOutput.trim();
+        msg = 'Output: "' + outputDiv.textContent + '"';
+      }
+      if (expectError !== undefined) {
+        pass = errorDiv.textContent.trim() === expectError.trim();
+        msg = 'Error: "' + errorDiv.textContent + '"';
+      }
+      showResult(title, pass, msg);
+    }
+
+    // Helper: test unit cho countingSort
+    function runUnitTest({title, arr, min, max, expect}) {
+      // Lấy function từ iframe
+      const frame = document.getElementById('demoFrame');
+      const countingSort = frame.contentWindow.countingSort;
+      let result;
+      let pass = false, msg = '';
+      try {
+        result = countingSort([...arr], min, max);
+        pass = JSON.stringify(result) === JSON.stringify(expect);
+        msg = 'Kết quả: [' + result + ']';
+      } catch (e) {
+        msg = 'Lỗi: ' + e;
+      }
+      showResult(title, pass, msg);
+    }
+
+    // Hiển thị kết quả
+    function showResult(title, pass, msg) {
+      const div = document.createElement('div');
+      div.className = 'test-result ' + (pass ? 'pass' : 'fail');
+      div.innerHTML = '<span class="test-title">' + title + '</span><br>' + msg;
+      document.getElementById('testResults').appendChild(div);
+    }
+
+    // Danh sách test case
+    const uiTests = [
+      {
+        title: '1. Chuỗi hợp lệ, nhiều số, có lặp',
+        input: '7,3,1,15,2,7,2,0,4',
+        expectOutput: 'Kết quả sắp xếp: 0, 1, 2, 2, 3, 4, 7, 7, 15'
+      },
+      {
+        title: '2. Chuỗi hợp lệ, có khoảng trắng thừa',
+        input: '  5 , 2,  9 , 1 ',
+        expectOutput: 'Kết quả sắp xếp: 1, 2, 5, 9'
+      },
+      {
+        title: '3. Chuỗi chỉ 1 số',
+        input: '42',
+        expectOutput: 'Kết quả sắp xếp: 42'
+      },
+      {
+        title: '4. Chuỗi toàn số giống nhau',
+        input: '8,8,8,8',
+        expectOutput: 'Kết quả sắp xếp: 8, 8, 8, 8'
+      },
+      {
+        title: '5. Chuỗi có số 0 và 100',
+        input: '0,100,50',
+        expectOutput: 'Kết quả sắp xếp: 0, 50, 100'
+      },
+      {
+        title: '6. Chuỗi rỗng',
+        input: '',
+        expectError: 'Vui lòng nhập ít nhất một số!'
+      },
+      {
+        title: '7. Chuỗi chỉ dấu phẩy',
+        input: ',,,',
+        expectError: 'Không tìm thấy số hợp lệ.'
+      },
+      {
+        title: '8. Chuỗi có số âm',
+        input: '1,-2,3',
+        expectError: 'Giá trị "-2" không hợp lệ! Chỉ nhập số nguyên từ 0 đến 100.'
+      },
+      {
+        title: '9. Chuỗi có số lớn hơn 100',
+        input: '1,101,3',
+        expectError: 'Giá trị "101" không hợp lệ! Chỉ nhập số nguyên từ 0 đến 100.'
+      },
+      {
+        title: '10. Chuỗi có số thực',
+        input: '1,2.5,3',
+        expectError: 'Giá trị "2.5" không hợp lệ! Chỉ nhập số nguyên từ 0 đến 100.'
+      },
+      {
+        title: '11. Chuỗi có ký tự không phải số',
+        input: '1,abc,3',
+        expectError: 'Giá trị "abc" không hợp lệ! Chỉ nhập số nguyên từ 0 đến 100.'
+      },
+      {
+        title: '12. Chuỗi có dấu phẩy đầu/cuối/liên tiếp',
+        input: ',1,2,3,,',
+        expectOutput: 'Kết quả sắp xếp: 1, 2, 3'
+      }
+    ];
+
+    const unitTests = [
+      {
+        title: 'Unit: Mảng rỗng',
+        arr: [],
+        min: 0,
+        max: 100,
+        expect: []
+      },
+      {
+        title: 'Unit: Mảng 1 phần tử',
+        arr: [5],
+        min: 0,
+        max: 100,
+        expect: [5]
+      },
+      {
+        title: 'Unit: Mảng đã sắp xếp',
+        arr: [1,2,3,4],
+        min: 0,
+        max: 100,
+        expect: [1,2,3,4]
+      },
+      {
+        title: 'Unit: Mảng ngược',
+        arr: [4,3,2,1],
+        min: 0,
+        max: 100,
+        expect: [1,2,3,4]
+      },
+      {
+        title: 'Unit: Mảng có lặp',
+        arr: [2,1,2,1,0],
+        min: 0,
+        max: 100,
+        expect: [0,1,1,2,2]
+      },
+      {
+        title: 'Unit: Mảng có 0 và 100',
+        arr: [100,0,50],
+        min: 0,
+        max: 100,
+        expect: [0,50,100]
+      }
+    ];
+
+    // Chạy toàn bộ test
+    async function runAllTests() {
+      const frame = document.getElementById('demoFrame');
+      await waitForFrameLoad(frame);
+
+      // Unit test
+      for (const t of unitTests) {
+        runUnitTest(t);
+      }
+
+      // UI test
+      for (const t of uiTests) {
+        await runUITest(t);
+      }
+    }
+
+    runAllTests();
+  </script>
+</body>
+</html>

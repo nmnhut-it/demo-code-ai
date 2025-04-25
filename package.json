@@ -1,5 +1,5 @@
 {
-  "homepage": "https://<your-username>.github.io/<your-repo-name>",
+  "homepage": "https://nmnhut-it.github.io/demo-code-ai",
   "dependencies": {
     "@types/node": "^22.15.2",
     "@types/react": "^19.1.2",
